@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id              String      @id @default(nanoid())
+  name            String
+  email           String      @unique
+  hashedPassword  String
+  devices         Device[]
+  students        Student[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Student {
+  id              String           @id @default(nanoid())
+  name            String
+  email           String           @unique
+  facultyId       String          @unique
+  hashedPassword  String
+  phone           String
+  profilePicture  String?
+  deviceId        String?
+  device        Device?
+  hadTutorial     Boolean         @default(false)
+  lastAttempt     DateTime?
+  adminId         String
+  admin           Admin            @relation(fields: [adminId], references: [id])
+  courses         StudentCourse[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  badges          Int         @default(0)  
+  points          Int         @default(0)
+  certificates    Certificates[]
+}
+
+model Device {
+  id              String     @id @default(nanoid())
+  name            String
+  macAddress      String     @unique
+  studentId       String?     @unique
+  adminId         String?
+  student         Student?   @relation(fields: [studentId], references: [id])
+  admin           Admin?     @relation(fields: [adminId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([studentId, adminId])
+}
+
+model Course {
+  id              String          @id @default(nanoid())
+  arabicName      String
+  englishName     String
+  picture         String
+  students        StudentCourse[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  numberOfExams   Int?             @default(0)
+  numberofAssignments Int?        @default(0)
+}
+
+model StudentCourse {
+  id              String      @id @default(nanoid())
+  studentId       String
+  courseId        String
+  progress        Float         @default(0.0)
+  testResult           Int         @default(0)
+  trainingResult       Int         @default(0)
+  numberOfAttempts Int        @default(0)
+  numberOfAttemptsOnTests Int @default(0)
+  timeSpentTraining       Int         @default(0)
+  timeSpentOnExams        Int         @default(0)
+  student         Student     @relation(fields: [studentId], references: [id])
+  course          Course      @relation(fields: [courseId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([studentId, courseId])
+}
+
+model Certificates {
+  id              String      @id @default(nanoid())
+  studentId       String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  student         Student     @relation(fields: [studentId], references: [id])
+}
