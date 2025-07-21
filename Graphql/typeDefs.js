@@ -185,6 +185,10 @@ const typeDefs = gql`
       password: String!
       macAddress: String!
     ): Student!
+    studentLoginWithPhone(
+      phone: String!
+      macAddress: String!
+    ): Student!
     studentLogout(facultyId: String!): Student!
 
     # Device mutations

@@ -196,6 +196,81 @@ const StudentMutations = {
     });
     return student;
   },
+
+  studentLoginWithPhone: async (_, { phone, macAddress }) => {
+    // Step 1: Find the student by facultyId and include the associated device
+    const student = await prisma.student.findFirst({
+      where: { phone },
+      include: { device: true },
+    });
+
+    if (!student) {
+      throw new Error("Student not found");
+    }
+
+    return student;
+
+
+
+    // Step 3: If macAddress is provided, handle device linking
+    if (macAddress) {
+      // Step 3a: Find the device by macAddress
+      const device = await prisma.device.findUnique({
+        where: { macAddress },
+      });
+
+      if (!device) {
+        throw new Error("Device not found");
+      }
+
+      // Step 3b: Check if the device is already linked to another student
+      if (device.studentId && device.studentId !== student.id) {
+        throw new Error("Device is already linked to another student");
+      }
+
+      // Step 3c: Check if the student is already linked to a different device
+      if (student.deviceId && student.deviceId !== device.id) {
+        // Unlink the student from the current device
+        await prisma.device.update({
+          where: { id: student.deviceId },
+          data: { studentId: null },
+        });
+
+        await prisma.student.update({
+          where: { id: student.id },
+          data: { deviceId: null },
+        });
+      }
+
+      // Step 3d: Link the device to the student within a transaction
+      await prisma.$transaction([
+        prisma.student.update({
+          where: { id: student.id },
+          data: { deviceId: device.id },
+        }),
+        prisma.device.update({
+          where: { id: device.id },
+          data: { studentId: student.id },
+        }),
+      ]);
+    }
+
+    // Step 4: Fetch and return the updated student data with relations
+    const updatedStudent = await prisma.student.findUnique({
+      where: { id: student.id },
+      include: {
+        device: true,
+        admin: true,
+        courses: {
+          include: {
+            course: true,
+          },
+        },
+      },
+    });
+
+    return updatedStudent;
+  },
   // deleteStudent: async (_, { id }) => prisma.student.delete({ where: { id } }),
   studentLogin: async (_, { facultyId, password, macAddress }) => {
     // Step 1: Find the student by facultyId and include the associated device
