@@ -10,22 +10,36 @@ const typeDefs = gql`
     hashedPassword: String!
     devices: [Device!]!
     students: [Student!]!
+    groupId: String
+    group: Group
     createdAt: DateTime!
     updatedAt: DateTime!
+  }
+
+  type Group {
+    id: ID!
+    name: String!
+    category: String!
+    students: [Student!]!
+    admins: [Admin!]!
+    usersCount: Int!  
   }
 
   type Student {
     id: ID!
     name: String!
-    email: String!
+    email: String
     facultyId: String!
-    hashedPassword: String!
+    hashedPassword: String
     phone: String!
     profilePicture: String
     deviceId: String
     device: Device
     adminId: String!
+    groupId: String
+    group: Group
     admin: Admin!
+    stage: String
     hadTutorial: Boolean!
     lastAttempt: DateTime
     courses: [StudentCourse!]!
@@ -83,12 +97,46 @@ const typeDefs = gql`
     createdAt: DateTime!
     updatedAt: DateTime!
   }
+  type BulkStudentResult {
+    successCount: Int!
+    failed: [FailedStudent!]!
+  }
+
+  type FailedStudent {
+    row: Int!
+    reason: String!
+    name: String
+    phone: String
+    facultyId: String
+  }
+  type BulkAdminResult {
+    successCount: Int!
+    failed: [FailedAdmin!]!
+  }
+  type FailedAdmin {
+    row: Int!
+    reason: String!
+    name: String
+    email: String
+  }
 
   input StudentFilters {
     id: String
     name: String
     grade: String
     phase: String
+    group: String
+    stage: String
+  }
+  input AdminFilters {
+    id: String
+    name: String
+    group: String
+    email: String
+  }
+  input GroupFilters {
+    id: String
+    name: String
   }
   # Custom Scalar Type
   scalar DateTime
@@ -96,6 +144,34 @@ const typeDefs = gql`
   # Define the queries for fetching data
   type Query {
     getAdminById(id: ID!): Admin
+    getAllAdminsPaginated(
+      page: Int
+      perPage: Int
+      sortBy: String
+      filters: AdminFilters
+    ): AdminPagination!
+    getAllAdminsNotPaginated(
+      sortBy: String
+      filters: AdminFilters
+    ): AdminList!
+    getAllGroupsPaginated(
+      page: Int
+      perPage: Int
+      sortBy: String
+      filters: GroupFilters
+    ): GroupPagination!
+    getAllGroups(
+      sortBy: String
+      filters: GroupFilters
+    ): GroupList!
+    getAllStudentGroups(
+      sortBy: String
+      filters: GroupFilters
+    ): GroupList!
+    getAllAdminGroups(
+      sortBy: String
+      filters: GroupFilters
+    ): GroupList!
     getStudentById(id: ID!): Student
     getDeviceById(id: ID!): Device
     getCourseById(id: ID!): Course
@@ -109,6 +185,10 @@ const typeDefs = gql`
       sortBy: String
       filters: StudentFilters
     ): StudentPagination!
+    getAllStudentsNotPaginated(
+      sortBy: String
+      filters: StudentFilters
+    ): StudentList!
     getAllDevices: [Device!]!
     getAllCourses: [Course!]!
     getAllCoursesPaginated(page: Int, perPage: Int, sortBy: String): CoursePagination!
@@ -134,10 +214,33 @@ const typeDefs = gql`
     current_page: Int!
     last_page: Int!
   }  
+  type StudentList {
+    data: [Student!]!
+  }
+  type AdminPagination {
+    data: [Admin!]!
+    total: Int!
+    per_page: Int!
+    current_page: Int!
+    last_page: Int!
+  }
+  type AdminList {
+    data: [Admin!]!
+  }
+  type GroupPagination {
+    data: [Group!]!
+    total: Int!
+    per_page: Int!
+    current_page: Int!
+    last_page: Int!
+  }   
+  type GroupList {
+    data: [Group!]!
+  }   
   # Define mutations for creating, updating, and deleting data
   type Mutation {
     # Admin mutations
-    createAdmin(name: String!, email: String!, hashedPassword: String!): Admin!
+    createAdmin(name: String!, email: String!, hashedPassword: String!, groupId: String): Admin!
     updateAdmin(
       id: ID!
       name: String
@@ -151,7 +254,8 @@ const typeDefs = gql`
       macAddress: String
       deviceName: String
     ): Admin!
-
+    # Group mutations
+    createGroup(name: String!, category: String): Group!
     # Student mutations
     createStudent(
       name: String!
@@ -166,6 +270,21 @@ const typeDefs = gql`
       badge: Int
       ponits: Int
     ): Student!
+    createStudentMain(
+      name: String!
+      groupId: String!
+      facultyId: String!
+      phone: String!
+      adminId: String!
+      stage: String
+      hadTutorial: Boolean
+      lastAttempt: DateTime
+      badge: Int
+      ponits: Int
+    ): Student!
+    bulkCreateStudents(file: Upload!): BulkStudentResult!
+    bulkCreateAdmins(file: Upload!): BulkAdminResult!
+
     updateStudent(
       id: ID!
       name: String
@@ -178,6 +297,15 @@ const typeDefs = gql`
       lastAttempt: DateTime
       badge: Int
       ponits: Int
+    ): Student!
+    updateStudentMain(
+      id: ID!
+      name: String
+      groupId: String
+      adminId: String
+      facultyId: String
+      phone: String
+      stage: String  
     ): Student!
     deleteStudent(id: ID!): Student!
     studentLogin(

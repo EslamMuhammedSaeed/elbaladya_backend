@@ -14,16 +14,28 @@ model Admin {
   hashedPassword  String
   devices         Device[]
   students        Student[]
+  groupId   String?
+  group     Group?    @relation(fields: [groupId], references: [id])
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+}
+
+model Group {
+  id        String   @id @default(nanoid())
+  name      String   @unique
+  category  Category @default(student)
+  students  Student[]
+  admins    Admin[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Student {
   id              String           @id @default(nanoid())
   name            String
-  email           String           @unique
+  email           String?           @unique
   facultyId       String          @unique
-  hashedPassword  String
+  hashedPassword  String?
   phone           String
   profilePicture  String?
   deviceId        String?
@@ -38,6 +50,9 @@ model Student {
   badges          Int         @default(0)  
   points          Int         @default(0)
   certificates    Certificates[]
+  stage     Stage    @default(stage_2)
+  groupId   String?
+  group     Group?    @relation(fields: [groupId], references: [id])
 }
 
 model Device {
@@ -91,4 +106,14 @@ model Certificates {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   student         Student     @relation(fields: [studentId], references: [id])
+}
+
+enum Category {
+  admin
+  student
+}
+
+enum Stage {
+  stage_1
+  stage_2
 }

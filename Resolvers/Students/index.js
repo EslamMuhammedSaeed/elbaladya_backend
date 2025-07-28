@@ -1,4 +1,5 @@
 const prisma = require("../../config/database");
+const csv = require("csv-parser");
 const {
   generatePassword,
   validatePassword,
@@ -23,14 +24,25 @@ const StudentQueries = {
         mode: "insensitive",
       };
     }
+    if (filters.group) {
+      prismaFilters.groupId = filters.group;
+    }
+
+    if (filters.stage) {
+      prismaFilters.stage = filters.stage;
+    }
 
     const students = await prisma.student.findMany({
       where: prismaFilters,
-      include: { courses: true },
+      include: { courses: true, group: true },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
 
     const enriched = students
       .map((student) => {
+        const group = student.group;
         const totalNumberOfTraingings = student.courses.reduce(
           (sum, course) => sum + course.numberOfAttempts,
           0
@@ -59,6 +71,7 @@ const StudentQueries = {
 
         return {
           ...student,
+          group,
           totalNumberOfTraingings,
           totalNumberOfHours,
           percentage,
@@ -120,6 +133,125 @@ const StudentQueries = {
       current_page: page,
       last_page: Math.ceil(total / perPage),
     };
+  },
+
+  getAllStudentsNotPaginated: async (_, { sortBy, filters = {} }) => {
+    const prismaFilters = {};
+
+    if (filters.id) {
+      prismaFilters.id = { contains: filters.id };
+    }
+
+    if (filters.name) {
+      prismaFilters.name = {
+        contains: filters.name,
+        mode: "insensitive",
+      };
+    }
+    if (filters.group) {
+      prismaFilters.groupId = filters.group;
+    }
+
+    if (filters.stage) {
+      prismaFilters.stage = filters.stage;
+    }
+
+    const students = await prisma.student.findMany({
+      where: prismaFilters,
+      include: { courses: true, group: true },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const enriched = students
+      .map((student) => {
+        const group = student.group;
+        const totalNumberOfTraingings = student.courses.reduce(
+          (sum, course) => sum + course.numberOfAttempts,
+          0
+        );
+
+        const totalNumberOfHours = student.courses.reduce(
+          (sum, course) => sum + course.timeSpentTraining,
+          0
+        );
+
+        const percentage = student.courses.length
+          ? student.courses.reduce((sum, course) => sum + course.testResult, 0) /
+          student.courses.length
+          : 0;
+
+        const gradeKey =
+          percentage >= 90
+            ? "excellent"
+            : percentage >= 80
+              ? "very_good"
+              : percentage >= 70
+                ? "good"
+                : percentage >= 50
+                  ? "passed"
+                  : "failed";
+
+        return {
+          ...student,
+          group,
+          totalNumberOfTraingings,
+          totalNumberOfHours,
+          percentage,
+          gradeKey,
+        };
+      })
+      .filter((student) => {
+        const gradeMatch =
+          !filters.grade || filters.grade === "all"
+            ? true
+            : student.gradeKey === filters.grade;
+
+        const phaseMatch =
+          !filters.phase || filters.phase === "all"
+            ? true
+            : student.phase === filters.phase; // adjust if phase is elsewhere
+
+        return gradeMatch && phaseMatch;
+      });
+
+    const validSorts = [
+      "name",
+      "totalNumberOfTraingings",
+      "percentage",
+      "totalNumberOfHours",
+      "lastAttempt",
+      "grade",
+    ];
+
+    if (sortBy && validSorts.includes(sortBy)) {
+      enriched.sort((a, b) => {
+        if (sortBy === "grade") {
+          const gradeOrder = {
+            excellent: 5,
+            very_good: 4,
+            good: 3,
+            passed: 2,
+            failed: 1,
+          };
+          return gradeOrder[b.gradeKey] - gradeOrder[a.gradeKey];
+        } else if (sortBy === "name") {
+          return b.name.localeCompare(a.name);
+        } else if (sortBy === "lastAttempt") {
+          return new Date(b.lastAttempt || 0) - new Date(a.lastAttempt || 0);
+        } else {
+          return (b[sortBy] || 0) - (a[sortBy] || 0);
+        }
+      });
+    }
+
+
+
+    return {
+      data: enriched,
+
+    };
   }
 
 
@@ -161,6 +293,120 @@ const StudentMutations = {
     });
     return student;
   },
+
+  createStudentMain: async (_, { name, groupId, facultyId, phone, adminId, stage }) => {
+    const checkExistsAndThrow = async (field, value, message) => {
+      const exists = await prisma.student.findFirst({ where: { [field]: value } });
+      if (exists) throw new Error(message);
+    };
+
+    // Run validations in parallel
+    await Promise.all([
+      checkExistsAndThrow("name", name, "Name already exists"),
+      checkExistsAndThrow("facultyId", facultyId, "Faculty ID already exists"),
+      checkExistsAndThrow("phone", phone, "Phone number already exists"),
+    ]);
+
+    // Create new student
+    const student = await prisma.student.create({
+      data: { name, groupId, facultyId, phone, adminId, stage },
+    });
+
+    return student;
+  },
+
+  bulkCreateStudents: async (_, { file }) => {
+    const { createReadStream } = await file;
+    const stream = createReadStream();
+
+    const students = [];
+    const failed = [];
+    let rowNumber = 1;
+
+    return new Promise((resolve, reject) => {
+      stream
+        .pipe(csv())
+        .on("data", (row) => {
+          rowNumber++;
+          const { name, phone, facultyId, groupId, adminId, stage } = row;
+          students.push({
+            name: name?.trim(),
+            phone: phone?.trim(),
+            facultyId: facultyId?.trim(),
+            groupId: groupId?.trim(),
+            adminId: adminId?.trim(),
+            stage: stage?.trim(),
+            row: rowNumber,
+          });
+        })
+        .on("end", async () => {
+          const success = [];
+
+          for (const s of students) {
+            const { name, phone, facultyId, groupId, adminId, stage, row } = s;
+
+            // Validate required fields
+            if (!name || !phone || !facultyId || !groupId || !adminId || !stage) {
+              failed.push({
+                row,
+                reason: "Missing required fields",
+                name,
+                phone,
+                facultyId,
+                stage
+              });
+              continue;
+            }
+
+            // Check for uniqueness
+            const [existsName, existsPhone, existsFacultyId] = await Promise.all([
+              prisma.student.findFirst({ where: { name } }),
+              prisma.student.findFirst({ where: { phone } }),
+              prisma.student.findFirst({ where: { facultyId } }),
+            ]);
+
+            if (existsName || existsPhone || existsFacultyId) {
+              failed.push({
+                row,
+                reason:
+                  (existsName && "Name exists") ||
+                  (existsPhone && "Phone exists") ||
+                  (existsFacultyId && "Faculty ID exists"),
+                name,
+                phone,
+                facultyId,
+              });
+              continue;
+            }
+
+            // Insert student
+            try {
+              await prisma.student.create({
+                data: { name, phone, facultyId, groupId, adminId, stage },
+              });
+              success.push(s);
+            } catch (err) {
+              failed.push({
+                row,
+                reason: "DB Error: " + err.message,
+                name,
+                phone,
+                facultyId,
+              });
+            }
+          }
+
+          resolve({
+            successCount: success.length,
+            failed,
+          });
+        })
+        .on("error", (error) => reject(error));
+    });
+  },
+
+
+
   updateStudent: async (
     _,
     {
@@ -197,6 +443,40 @@ const StudentMutations = {
     return student;
   },
 
+  updateStudentMain: async (_, { id, name, groupId, facultyId, phone, adminId, stage }) => {
+    const checkExistsAndThrow = async (field, value, message) => {
+      const exists = await prisma.student.findFirst({
+        where: {
+          [field]: value,
+          NOT: { id }, // Exclude the current student
+        },
+      });
+      if (exists) throw new Error(message);
+    };
+
+    // Run validations in parallel
+    await Promise.all([
+      checkExistsAndThrow("name", name, "Name already exists"),
+      checkExistsAndThrow("facultyId", facultyId, "Faculty ID already exists"),
+      checkExistsAndThrow("phone", phone, "Phone number already exists"),
+    ]);
+
+    // Create new student
+    const student = prisma.student.update({
+      where: { id },
+      data: {
+        name,
+        facultyId,
+        phone,
+        groupId,
+        adminId,
+        stage
+      },
+
+    });
+    return student;
+  },
+
   studentLoginWithPhone: async (_, { phone, macAddress }) => {
     // Step 1: Find the student by facultyId and include the associated device
     const student = await prisma.student.findFirst({
@@ -208,7 +488,6 @@ const StudentMutations = {
       throw new Error("Student not found");
     }
 
-    return student;
 
 
 
