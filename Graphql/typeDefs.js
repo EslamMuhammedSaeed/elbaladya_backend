@@ -254,6 +254,10 @@ const typeDefs = gql`
       macAddress: String
       deviceName: String
     ): Admin!
+    adminLoginMain(
+      email: String!
+      hashedPassword: String!
+    ): Admin!
     # Group mutations
     createGroup(name: String!, category: String): Group!
     # Student mutations
@@ -377,6 +381,16 @@ const typeDefs = gql`
       lastAttempt: DateTime
       timeSpentTraining: Int
       timeSpentOnExams: Int
+    ): StudentCourse!
+    updateStudentCourseMain(
+      id: ID!
+      progress: Float
+      testResult: Float
+      trainingResult: Float
+      numberOfAttempts: Int
+      numberOfAttemptsOnTests: Int
+      timeSpentTraining: Float
+      timeSpentOnExams: Float
     ): StudentCourse!
     deleteStudentCourse(id: ID!): StudentCourse!
 

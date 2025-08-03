@@ -107,6 +107,50 @@ const StudentCourseMutations = {
       });
     }
   },
+  updateStudentCourseMain: async (
+    _,
+    {
+      id,
+      progress,
+      testResult,
+      trainingResult,
+      numberOfAttempts,
+      numberOfAttemptsOnTests,
+      timeSpentTraining,
+      timeSpentOnExams,
+    }
+  ) => {
+    // Check if a record already exists for the given studentId and courseId
+    const existingRecord = await prisma.studentCourse.findFirst({
+      where: {
+        id,
+      },
+    });
+    if (existingRecord) {
+      // const isGradeUpdated =
+      //   testResult !== undefined && testResult !== existingRecord.testResult;
+
+      // Prepare data for update, incrementing numberOfAttempts and setting lastAttempt if needed
+      const updateData = {
+        numberOfAttemptsOnTests,
+        numberOfAttempts,
+        progress,
+        testResult,
+        trainingResult,
+        timeSpentTraining,
+        timeSpentOnExams,
+      };
+
+      // Update the existing record
+      return prisma.studentCourse.update({
+        where: { id: existingRecord.id },
+        data: updateData,
+      });
+    } else {
+      throw new Error("Record not found");
+
+    }
+  },
 };
 
 const StudentCourseRelations = {
