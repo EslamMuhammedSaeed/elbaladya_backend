@@ -270,8 +270,8 @@ const StudentMutations = {
       profilePicture,
       hadTutorial,
       lastAttempt,
-      badge,
-      ponits,
+      badges,
+      points,
     }
   ) => {
     hashedPassword = generatePassword(hashedPassword);
@@ -287,8 +287,8 @@ const StudentMutations = {
         hadTutorial,
         lastAttempt,
         profilePicture,
-        badge,
-        ponits,
+        badges,
+        points,
       },
     });
     return student;
@@ -419,7 +419,7 @@ const StudentMutations = {
       profilePicture,
       hadTutorial,
       lastAttempt,
-      badge,
+      badges,
       points,
     }
   ) => {
@@ -436,14 +436,14 @@ const StudentMutations = {
         profilePicture,
         hadTutorial,
         lastAttempt,
-        badge,
+        badges,
         points,
       },
     });
     return student;
   },
 
-  updateStudentMain: async (_, { id, name, groupId, facultyId, phone, adminId, stage }) => {
+  updateStudentMain: async (_, { id, name, groupId, facultyId, phone, adminId, stage, points, badges }) => {
     const checkExistsAndThrow = async (field, value, message) => {
       const exists = await prisma.student.findFirst({
         where: {
@@ -470,7 +470,9 @@ const StudentMutations = {
         phone,
         groupId,
         adminId,
-        stage
+        stage,
+        points,
+        badges
       },
 
     });

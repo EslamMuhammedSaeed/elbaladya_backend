@@ -3,6 +3,16 @@ const { gql } = require("apollo-server-express");
 const typeDefs = gql`
   # Define the main types
   scalar Upload
+  
+  # Authentication types
+  type AuthPayload {
+    token: String!
+    admin: Admin!
+  }
+  
+  # Custom directives
+  directive @auth on FIELD_DEFINITION
+  directive @admin on FIELD_DEFINITION
   type Admin {
     id: ID!
     name: String!
@@ -45,14 +55,17 @@ const typeDefs = gql`
     courses: [StudentCourse!]!
     createdAt: DateTime!
     updatedAt: DateTime!
-    badge: Int
-    ponits: Int
+    badges: Int
+    points: Int
     certificates: [Certificates!]!
   }
   type Certificates {
     id: ID!
     studentId: String!
+    courseId: String
+    course: Course
     student: Student
+    date: String
     createdAt: DateTime!
     updatedAt: DateTime!
   }
@@ -119,6 +132,97 @@ const typeDefs = gql`
     name: String
     email: String
   }
+  type CourseDashboard {
+    id: ID!
+    arabicName: String!
+    englishName: String!
+    studentCount: Int!                    
+    totalTimeSpentTraining: Float!       
+    totalNumberOfAttempts: Int!          
+    averageTrainingResultPercentage: Float!
+  }
+  type TrainingResultCategory {
+    label: String!
+    percentage: Float!
+  }
+
+  type Dashboard {
+    totalStudents: Int!
+    studentsWithProgressCount: Int!
+    studentsWithProgressPercentage: Float!
+    totalTimeSpentTraining: Float!
+    completedCoursesCount: Int!
+    completedCoursesPercentage: Float!
+    courses: [CourseDashboard!]
+    trainingResultCategories: [TrainingResultCategory!]!
+  }
+
+  type VisionData {
+    totalTrainingsWithStudents: Int!
+    activeTrainings: Int!
+    overallTrainingsSuccessPercentage: Float!
+    overallTrainingsCompletedPercentage: Float!
+    totalTrainingsWithStudentsPercentage: Float!
+    activeTrainingsPercentage: Float!
+  }
+
+  type UsersData {
+    totalUsers: Int!
+    totalAdmins: Int!
+    totalStudents: Int!
+    totalStudentsLastMonthIncreasePercentage: Float!
+  }
+
+  type CoursesData {
+
+    totalCourses: Int!
+    totalCoursesLastMonthIncreasePercentage: Float!
+    totalGroups: Int!
+    totalGroupsLastMonthIncreasePercentage: Float!
+    totalExams: Int!
+    totalAssignments: Int!
+  }
+
+  type StudentCoursesTimeSpentTrainingData {
+    timeSpentTraining: Int!
+    topCourses: [TopCourse!]!
+  }
+
+  type TopCourse {
+    id: ID!
+    arabicName: String!
+    englishName: String!
+    timeSpentTraining: Int!
+  }
+
+  type StudentCoursesData {
+    totalCourses: Int!
+    totalSuccessfulCourses: Int!
+    totalSuccessfulCoursesPercentage: Float!
+    totalFailedCourses: Int!
+    totalFailedCoursesPercentage: Float!
+    totalOnGoingCourses: Int!
+    totalOnGoingCoursesPercentage: Float!
+  }
+
+  type TopStudentsData {
+    topStudents: [TopStudent!]!
+  }
+
+  type TopStudent {
+    id: ID!
+    name: String!
+    points: Int!
+    badges: Int!
+    certificates: Int!
+  }
+
+  type SearchModel {
+    students: [Student!]!
+    courses: [Course!]!
+    groups: [Group!]!
+    admins: [Admin!]!
+  }
 
   input StudentFilters {
     id: String
@@ -143,62 +247,70 @@ const typeDefs = gql`
 
   # Define the queries for fetching data
   type Query {
-    getAdminById(id: ID!): Admin
+    getDashboardData: Dashboard @auth
+    getVisionData(groupId: String): VisionData @auth
+    getUsersData(groupId: String): UsersData @auth
+    getCoursesData(groupId: String): CoursesData @auth
+    getStudentCoursesTimeSpentTrainingData(groupId: String): StudentCoursesTimeSpentTrainingData @auth
+    getStudentCoursesData(groupId: String): StudentCoursesData @auth
+    getTopStudentsData(groupId: String): TopStudentsData @auth
+    getAdminById(id: ID!): Admin @auth
+    searchModel(search: String): SearchModel @auth
     getAllAdminsPaginated(
       page: Int
       perPage: Int
       sortBy: String
       filters: AdminFilters
-    ): AdminPagination!
+    ): AdminPagination! @auth
     getAllAdminsNotPaginated(
       sortBy: String
       filters: AdminFilters
-    ): AdminList!
+    ): AdminList! @auth
     getAllGroupsPaginated(
       page: Int
       perPage: Int
       sortBy: String
       filters: GroupFilters
-    ): GroupPagination!
+    ): GroupPagination! @auth
     getAllGroups(
       sortBy: String
       filters: GroupFilters
-    ): GroupList!
+    ): GroupList! @auth
     getAllStudentGroups(
       sortBy: String
       filters: GroupFilters
-    ): GroupList!
+    ): GroupList! @auth
     getAllAdminGroups(
       sortBy: String
       filters: GroupFilters
-    ): GroupList!
-    getStudentById(id: ID!): Student
-    getDeviceById(id: ID!): Device
-    getCourseById(id: ID!): Course
-    getStudentCourseById(id: ID!): StudentCourse
+    ): GroupList! @auth
+    getStudentById(id: ID!): Student @auth
+    getDeviceById(id: ID!): Device @auth
+    getCourseById(id: ID!): Course @auth
+    getStudentCourseById(id: ID!): StudentCourse @auth
 
-    getAllAdmins: [Admin!]!
-    getAllStudents: [Student!]!
+    getAllAdmins: [Admin!]! @auth
+    getAllStudents: [Student!]! @auth
     getAllStudentsPaginated(
       page: Int
       perPage: Int
       sortBy: String
       filters: StudentFilters
-    ): StudentPagination!
+    ): StudentPagination! @auth
     getAllStudentsNotPaginated(
       sortBy: String
       filters: StudentFilters
-    ): StudentList!
-    getAllDevices: [Device!]!
-    getAllCourses: [Course!]!
-    getAllCoursesPaginated(page: Int, perPage: Int, sortBy: String): CoursePagination!
-    getAllStudentCourses: [StudentCourse!]!
+    ): StudentList! @auth
+    getAllDevices: [Device!]! @auth
+    getAllCourses: [Course!]! @auth
+    getAllCoursesPaginated(page: Int, perPage: Int, sortBy: String): CoursePagination! @auth
+    getAllStudentCourses: [StudentCourse!]! @auth
     getStudentCourseByStudentIdAndCourseId(
       studentId: String!
       courseId: String!
-    ): StudentCourse
-    getAlllCertificates: [Certificates!]!
-    getCertificateById(id: ID!): Certificates
+    ): StudentCourse @auth
+    getAlllCertificates: [Certificates!]! @auth
+    getCertificateById(id: ID!): Certificates @auth
   }
   type CoursePagination {
     data: [Course!]!
@@ -240,14 +352,14 @@ const typeDefs = gql`
   # Define mutations for creating, updating, and deleting data
   type Mutation {
     # Admin mutations
-    createAdmin(name: String!, email: String!, hashedPassword: String!, groupId: String): Admin!
+    createAdmin(name: String!, email: String!, hashedPassword: String!, groupId: String): Admin! @auth
     updateAdmin(
       id: ID!
       name: String
       email: String
       hashedPassword: String
-    ): Admin!
-    deleteAdmin(id: ID!): Admin!
+    ): Admin! @auth
+    deleteAdmin(id: ID!): Admin! @auth
     adminLogin(
       email: String!
       hashedPassword: String!
@@ -257,9 +369,9 @@ const typeDefs = gql`
     adminLoginMain(
       email: String!
       hashedPassword: String!
-    ): Admin!
+    ): AuthPayload!
     # Group mutations
-    createGroup(name: String!, category: String): Group!
+    createGroup(name: String!, category: String): Group! @auth
     # Student mutations
     createStudent(
       name: String!
@@ -272,8 +384,8 @@ const typeDefs = gql`
       hadTutorial: Boolean
       lastAttempt: DateTime
       badge: Int
-      ponits: Int
-    ): Student!
+      points: Int
+    ): Student! @auth
     createStudentMain(
       name: String!
       groupId: String!
@@ -284,10 +396,10 @@ const typeDefs = gql`
       hadTutorial: Boolean
       lastAttempt: DateTime
       badge: Int
-      ponits: Int
-    ): Student!
-    bulkCreateStudents(file: Upload!): BulkStudentResult!
-    bulkCreateAdmins(file: Upload!): BulkAdminResult!
+      points: Int
+    ): Student! @auth
+    bulkCreateStudents(file: Upload!): BulkStudentResult! @auth
+    bulkCreateAdmins(file: Upload!): BulkAdminResult! @auth
 
     updateStudent(
       id: ID!
@@ -300,8 +412,8 @@ const typeDefs = gql`
       hadTutorial: Boolean
       lastAttempt: DateTime
       badge: Int
-      ponits: Int
-    ): Student!
+      points: Int
+    ): Student! @auth
     updateStudentMain(
       id: ID!
       name: String
@@ -310,8 +422,10 @@ const typeDefs = gql`
       facultyId: String
       phone: String
       stage: String  
-    ): Student!
-    deleteStudent(id: ID!): Student!
+      points: Int
+      badges: Int
+    ): Student! @auth
+    deleteStudent(id: ID!): Student! @auth
     studentLogin(
       facultyId: String!
       password: String!
@@ -321,7 +435,7 @@ const typeDefs = gql`
       phone: String!
       macAddress: String!
     ): Student!
-    studentLogout(facultyId: String!): Student!
+    studentLogout(facultyId: String!): Student! @auth
 
     # Device mutations
     createDevice(
@@ -329,15 +443,15 @@ const typeDefs = gql`
       macAddress: String!
       studentId: String
       adminId: String
-    ): Device!
+    ): Device! @auth
     updateDevice(
       id: ID!
       name: String
       macAddress: String
       studentId: String
       adminId: String
-    ): Device!
-    deleteDevice(id: ID!): Device!
+    ): Device! @auth
+    deleteDevice(id: ID!): Device! @auth
 
     # Course mutations
     createCourse(
@@ -346,7 +460,7 @@ const typeDefs = gql`
       picture: Upload!
       numberOfExams: Int
       numberofAssignments: Int
-    ): Course!
+    ): Course! @auth
     updateCourse(
       id: ID!
       arabicName: String
@@ -396,6 +510,7 @@ const typeDefs = gql`
 
     # Certificates mutations
     createCertificate(studentId: String!): Certificates!
+    createCertificateMain(studentId: String!, courseId: String!, date: String): Certificates!
     deleteCertificate(id: ID!): Certificates!
   }
 `;

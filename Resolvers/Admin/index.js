@@ -292,19 +292,20 @@ const AdminMutations = {
     if (!validatePassword(hashedPassword, admin.hashedPassword)) {
       throw new Error("Invalid password");
     }
-    // if (macAddress && deviceName) {
-    //   const device = await prisma.device.findUnique({ where: { macAddress } });
-    //   if (!device) {
-    //     await prisma.device.create({
-    //       data: {
-    //         name: deviceName,
-    //         macAddress,
-    //         adminId: admin.id,
-    //       },
-    //     });
-    //   }
-    // }
-    return admin;
+
+    // Generate JWT token
+    const { generateToken } = require("../../Middlewares/auth");
+    const token = generateToken({
+      id: admin.id,
+      email: admin.email,
+      name: admin.name,
+      role: 'admin'
+    });
+
+    return {
+      token,
+      admin
+    };
   },
 };
 

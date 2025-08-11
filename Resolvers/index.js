@@ -37,6 +37,12 @@ const {
   GroupRelations,
 } = require("./Group");
 
+const {
+  DashboardQueries,
+  DashboardMutations,
+  DashboardRelations,
+} = require("./Dashboard");
+
 // Export queries, mutations, and relations for centralized use
 module.exports = {
   // Queries
@@ -47,6 +53,7 @@ module.exports = {
   StudentCourseQueries,
   CertificateQueries,
   GroupQueries,
+  DashboardQueries,
 
   // Mutations
   AdminMutations,
@@ -56,6 +63,7 @@ module.exports = {
   StudentCourseMutations,
   CertificateMutations,
   GroupMutations,
+  DashboardMutations,
 
   // Relations
   AdminRelations,
@@ -65,4 +73,5 @@ module.exports = {
   StudentCourseRelations,
   CertificateRelations,
   GroupRelations,
+  DashboardRelations
 };

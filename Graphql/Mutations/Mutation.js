@@ -5,7 +5,8 @@ const {
   CourseMutations,
   StudentCourseMutations,
   CertificateMutations,
-  GroupMutations
+  GroupMutations,
+  DashboardMutations
 } = require("../../Resolvers");
 
 const Mutation = {
@@ -15,7 +16,8 @@ const Mutation = {
   ...CourseMutations,
   ...StudentCourseMutations,
   ...CertificateMutations,
-  ...GroupMutations
+  ...GroupMutations,
+  ...DashboardMutations
 };
 
 module.exports = Mutation;

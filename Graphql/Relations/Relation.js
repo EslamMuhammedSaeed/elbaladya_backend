@@ -5,6 +5,7 @@ const {
   CourseRelations,
   StudentCourseRelations,
   CertificateRelations,
+  DashboardRelations,
 } = require("../../Resolvers");
 
 const Relations = {
@@ -14,6 +15,7 @@ const Relations = {
   ...CourseRelations,
   ...StudentCourseRelations,
   ...CertificateRelations,
+  ...DashboardRelations
 };
 
 module.exports = Relations;

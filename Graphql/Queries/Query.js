@@ -6,6 +6,7 @@ const {
   StudentCourseQueries,
   CertificateQueries,
   GroupQueries,
+  DashboardQueries,
 } = require("../../Resolvers");
 
 const Query = {
@@ -16,6 +17,7 @@ const Query = {
   ...StudentCourseQueries,
   ...CertificateQueries,
   ...GroupQueries,
+  ...DashboardQueries
 };
 
 module.exports = Query;

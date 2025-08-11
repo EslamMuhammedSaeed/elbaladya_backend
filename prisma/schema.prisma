@@ -79,6 +79,7 @@ model Course {
   updatedAt       DateTime        @updatedAt
   numberOfExams   Int?             @default(0)
   numberofAssignments Int?        @default(0)
+  certificates    Certificates[]
 }
 
 model StudentCourse {
@@ -103,9 +104,12 @@ model StudentCourse {
 model Certificates {
   id              String      @id @default(nanoid())
   studentId       String
+  courseId        String?
+  date            DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   student         Student     @relation(fields: [studentId], references: [id])
+  course          Course?      @relation(fields: [courseId], references: [id])
 }
 
 enum Category {

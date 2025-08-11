@@ -21,6 +21,15 @@ const CertificateMutations = {
       },
     });
   },
+  createCertificateMain: async (_, { studentId, courseId, date }) => {
+    return prisma.certificates.create({
+      data: {
+        studentId,
+        courseId,
+        date: new Date(date),
+      },
+    });
+  },
   deleteCertificate: async (_, { id }) => {
     return prisma.certificates.delete({
       where: {
