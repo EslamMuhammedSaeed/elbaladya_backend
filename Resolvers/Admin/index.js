@@ -284,13 +284,26 @@ const AdminMutations = {
     }
     return admin;
   },
-  adminLoginMain: async (_, { email, hashedPassword }) => {
+  adminLoginMain: async (_, { email, hashedPassword, macAddress, deviceName }) => {
     const admin = await prisma.admin.findUnique({ where: { email } });
     if (!admin) {
       throw new Error("Admin not found");
     }
     if (!validatePassword(hashedPassword, admin.hashedPassword)) {
       throw new Error("Invalid password");
+    }
+
+    if (macAddress && deviceName) {
+      const device = await prisma.device.findUnique({ where: { macAddress } });
+      if (!device) {
+        await prisma.device.create({
+          data: {
+            name: deviceName,
+            macAddress,
+            adminId: admin.id,
+          },
+        });
+      }
     }
 
     // Generate JWT token

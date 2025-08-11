@@ -369,6 +369,8 @@ const typeDefs = gql`
     adminLoginMain(
       email: String!
       hashedPassword: String!
+      macAddress: String
+      deviceName: String
     ): AuthPayload!
     # Group mutations
     createGroup(name: String!, category: String): Group! @auth
