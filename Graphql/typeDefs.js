@@ -437,7 +437,7 @@ const typeDefs = gql`
       phone: String!
       macAddress: String!
     ): Student!
-    studentLogout(facultyId: String!): Student! @auth
+    studentLogout(facultyId: String!): Student!
 
     # Device mutations
     createDevice(
