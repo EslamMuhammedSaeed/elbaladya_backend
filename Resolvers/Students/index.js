@@ -505,9 +505,9 @@ const StudentMutations = {
       }
 
       // Step 3b: Check if the device is already linked to another student
-      if (device.studentId && device.studentId !== student.id) {
-        throw new Error("Device is already linked to another student");
-      }
+      // if (device.studentId && device.studentId !== student.id) {
+      //   throw new Error("Device is already linked to another student");
+      // }
 
       // Step 3c: Check if the student is already linked to a different device
       if (student.deviceId && student.deviceId !== device.id) {
@@ -582,9 +582,9 @@ const StudentMutations = {
       }
 
       // Step 3b: Check if the device is already linked to another student
-      if (device.studentId && device.studentId !== student.id) {
-        throw new Error("Device is already linked to another student");
-      }
+      // if (device.studentId && device.studentId !== student.id) {
+      //   throw new Error("Device is already linked to another student");
+      // }
 
       // Step 3c: Check if the student is already linked to a different device
       if (student.deviceId && student.deviceId !== device.id) {

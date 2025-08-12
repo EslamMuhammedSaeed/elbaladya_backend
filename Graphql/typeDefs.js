@@ -301,7 +301,7 @@ const typeDefs = gql`
       sortBy: String
       filters: StudentFilters
     ): StudentList! @auth
-    getAllDevices: [Device!]! @auth
+    getAllDevices: [Device!]! 
     getAllCourses: [Course!]! @auth
     getAllCoursesPaginated(page: Int, perPage: Int, sortBy: String): CoursePagination! @auth
     getAllStudentCourses: [StudentCourse!]! @auth
