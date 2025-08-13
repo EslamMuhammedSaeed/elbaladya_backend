@@ -470,7 +470,7 @@ const typeDefs = gql`
       picture: Upload
       numberOfExams: Int
       numberofAssignments: Int
-    ): Course!
+    ): Course! @auth
     deleteCourse(id: ID!): Course!
 
     # StudentCourse mutations
@@ -485,7 +485,7 @@ const typeDefs = gql`
       lastAttempt: DateTime
       timeSpentTraining: Int
       timeSpentOnExams: Int
-    ): StudentCourse!
+    ): StudentCourse! @auth
     updateStudentCourse(
       studentId: String!
       courseId: String!
@@ -497,7 +497,7 @@ const typeDefs = gql`
       lastAttempt: DateTime
       timeSpentTraining: Int
       timeSpentOnExams: Int
-    ): StudentCourse!
+    ): StudentCourse! @auth
     updateStudentCourseMain(
       id: ID!
       progress: Float
@@ -507,7 +507,7 @@ const typeDefs = gql`
       numberOfAttemptsOnTests: Int
       timeSpentTraining: Float
       timeSpentOnExams: Float
-    ): StudentCourse!
+    ): StudentCourse! @auth
     deleteStudentCourse(id: ID!): StudentCourse!
 
     # Certificates mutations
