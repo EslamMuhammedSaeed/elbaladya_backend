@@ -70,6 +70,15 @@ const StudentCourseMutations = {
         courseId,
       },
     });
+    const student = await prisma.student.findUnique({ where: { id: studentId } });
+    if (student) {
+      prisma.student.update({
+        where: { id: studentId },
+        data: {
+          lastAttempt: new Date(),
+        },
+      });
+    }
     if (existingRecord) {
       // const isGradeUpdated =
       //   testResult !== undefined && testResult !== existingRecord.testResult;
@@ -126,6 +135,15 @@ const StudentCourseMutations = {
         id,
       },
     });
+    const student = await prisma.student.findUnique({ where: { id: existingRecord.studentId } });
+    if (student) {
+      await prisma.student.update({
+        where: { id: student.id },
+        data: {
+          lastAttempt: new Date(),
+        },
+      });
+    }
     if (existingRecord) {
       // const isGradeUpdated =
       //   testResult !== undefined && testResult !== existingRecord.testResult;
