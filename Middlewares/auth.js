@@ -5,7 +5,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-i
 
 // Generate JWT token
 const generateToken = (payload) => {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+    // return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+    return jwt.sign(payload, JWT_SECRET);
 };
 
 // Verify JWT token
