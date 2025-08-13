@@ -109,7 +109,7 @@ const StudentCourseMutations = {
           testResult,
           numberOfAttempts,
           trainingResult,
-          numberOfAttemptsOnTests: 0,
+          numberOfAttemptsOnTests,
           timeSpentTraining,
           timeSpentOnExams,
         },
