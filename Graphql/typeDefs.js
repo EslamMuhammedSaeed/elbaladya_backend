@@ -397,7 +397,7 @@ const typeDefs = gql`
       stage: String
       hadTutorial: Boolean
       lastAttempt: DateTime
-      badge: Int
+      badges: Int
       points: Int
     ): Student! @auth
     bulkCreateStudents(file: Upload!): BulkStudentResult! @auth
